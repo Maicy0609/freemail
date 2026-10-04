@@ -1,6 +1,9 @@
 name = "vmail"
 main = "worker/src/index.ts"
 
+# 禁用默认的 workers.dev 访问，只走自定义域名
+workers_dev = false
+
 # 打包配置
 minify = true
 compatibility_flags = [ "nodejs_compat" ]
@@ -46,3 +49,8 @@ command = "pnpm run build"
 [assets]
 binding = "ASSETS"
 directory = "frontend/build/client"
+
+# 自定义域名访问
+[[routes]]
+pattern = "mail.rechicy.ccwu.cc"
+custom_domain = true
