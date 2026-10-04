@@ -13,6 +13,7 @@ import { decrypt } from './utils';
 // 导入 v1 API
 import v1Api from './api/v1';
 import { isOpenApiEnabled, requireOpenApi } from './openapi';
+import { createMaintenanceResponse, isSiteEnabled } from './site-switch';
 import {
   buildCloudflareMimeMessage,
   buildMailChannelsPayload,
@@ -46,6 +47,7 @@ export interface Env {
   API_RATE_LIMIT_PER_MINUTE?: string;
   SHOW_AFF?: string;
   ENABLE_OPENAPI?: string;
+  SITE_ENABLED?: string;
   SEND_CHANNEL?: string;
   SEND_EMAIL?: SendEmail;
 }
@@ -596,6 +598,12 @@ app.get('/assets/*', serveStatic({ root: './' }))
 export default {
   // 邮件处理逻辑
   async email(message: ForwardableEmail, env: Env, ctx: ExecutionContext) {
+    // 全站开关：关闭时不再接收邮件
+    if (!isSiteEnabled(env)) {
+      console.log('站点已关闭，忽略来信:', message.to);
+      return;
+    }
+
     try {
       const db = getD1DB(env.DB);
       // 将原始邮件流转换为文本
@@ -649,6 +657,11 @@ export default {
   // HTTP 请求处理逻辑
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+
+    // 全站开关：关闭时不提供任何服务（静态页面、API 均返回维护页）
+    if (!isSiteEnabled(env)) {
+      return createMaintenanceResponse();
+    }
 
     if (!shouldBypassSiteGate(url.pathname) && !isSiteUnlocked(request, env)) {
       return new Response(JSON.stringify({ message: 'Site is locked' }), {
