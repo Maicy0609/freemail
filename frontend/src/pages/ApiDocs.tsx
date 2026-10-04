@@ -258,7 +258,7 @@ API requests are rate limited based on your API Key configuration. Default limit
       return;
     }
 
-    if (!turnstileToken) {
+    if (config.turnstileEnabled && !turnstileToken) {
       toast.error(t("Please complete the verification first"));
       return;
     }
@@ -512,22 +512,26 @@ API requests are rate limited based on your API Key configuration. Default limit
                       className="w-full md:w-1/2 px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">
-                      {t("Verification")}
-                    </label>
-                    <div className="[&_iframe]:!w-full h-[65px] max-w-[300px] bg-gray-700 rounded">
-                      <Turnstile
-                        siteKey={config.turnstileKey}
-                        onSuccess={setTurnstileToken}
-                        options={{ theme: "dark" }}
-                      />
+                  {config.turnstileEnabled && (
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">
+                        {t("Verification")}
+                      </label>
+                      <div className="[&_iframe]:!w-full h-[65px] max-w-[300px] bg-gray-700 rounded">
+                        <Turnstile
+                          siteKey={config.turnstileKey}
+                          onSuccess={setTurnstileToken}
+                          options={{ theme: "dark" }}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <button
                     onClick={handleCreateApiKey}
                     disabled={
-                      !config.openApiEnabled || !turnstileToken || isCreating
+                      !config.openApiEnabled ||
+                      (config.turnstileEnabled && !turnstileToken) ||
+                      isCreating
                     }
                     className="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-medium transition-colors">
                     {isCreating ? t("Creating...") : t("Create API Key")}
